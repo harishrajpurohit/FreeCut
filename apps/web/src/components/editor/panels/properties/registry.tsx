@@ -26,6 +26,9 @@ import { ElementParamsTab } from "./components/element-params-tab";
 import { ClipEffectsTab, StandaloneEffectTab } from "@/effects/components/effects-tab";
 import { MasksTab } from "@/masks/components/masks-tab";
 import { SpeedTab } from "@/speed/components/speed-tab";
+import { TransitionTab } from "@/transitions/components/transition-tab";
+import { TextAnimationTab } from "@/text/components/animation-tab";
+import { AudioFadeTab } from "@/timeline/components/audio-fade-tab";
 import { GraphicTab } from "@/graphics/components/graphic-tab";
 import { OcShapesIcon } from "@/components/icons";
 
@@ -135,6 +138,21 @@ function buildAudioTab({
 	};
 }
 
+function buildAudioFadeTab({
+	element,
+}: {
+	element: AudioElement | VideoElement;
+}): PropertiesTabDef {
+	return {
+		id: "fade",
+		label: "Fade",
+		icon: <HugeiconsIcon icon={MusicNote03Icon} size={16} />,
+		content: ({ trackId }) => (
+			<AudioFadeTab element={element} trackId={trackId} />
+		),
+	};
+}
+
 function buildSpeedTab({
 	element,
 }: {
@@ -158,6 +176,36 @@ function buildMasksTab({
 		label: "Masks",
 		icon: <OcShapesIcon size={16} />,
 		content: ({ trackId }) => <MasksTab element={element} trackId={trackId} />,
+	};
+}
+
+function buildTransitionTab({
+	element,
+}: {
+	element: VideoElement | ImageElement;
+}): PropertiesTabDef {
+	return {
+		id: "transition",
+		label: "Transition",
+		icon: <HugeiconsIcon icon={ArrowExpandIcon} size={16} />,
+		content: ({ trackId }) => (
+			<TransitionTab element={element} trackId={trackId} />
+		),
+	};
+}
+
+function buildTextAnimationTab({
+	element,
+}: {
+	element: TextElement;
+}): PropertiesTabDef {
+	return {
+		id: "animation",
+		label: "Animation",
+		icon: <HugeiconsIcon icon={MagicWand05Icon} size={16} />,
+		content: ({ trackId }) => (
+			<TextAnimationTab element={element} trackId={trackId} />
+		),
 	};
 }
 
@@ -229,6 +277,7 @@ function getTextConfig({
 		defaultTab: "text",
 		tabs: [
 			buildTextTab({ element }),
+			buildTextAnimationTab({ element }),
 			buildTransformTab({ element }),
 			buildBlendingTab({ element }),
 		],
@@ -247,10 +296,13 @@ function getVideoConfig({
 		defaultTab: "transform",
 		tabs: [
 			buildTransformTab({ element }),
-			...(showAudioTab ? [buildAudioTab({ element })] : []),
+			...(showAudioTab
+				? [buildAudioTab({ element }), buildAudioFadeTab({ element })]
+				: []),
 			buildSpeedTab({ element }),
 			buildBlendingTab({ element }),
 			buildMasksTab({ element }),
+			buildTransitionTab({ element }),
 			buildClipEffectsTab({ element }),
 		],
 	};
@@ -267,6 +319,7 @@ function getImageConfig({
 			buildTransformTab({ element }),
 			buildBlendingTab({ element }),
 			buildMasksTab({ element }),
+			buildTransitionTab({ element }),
 			buildClipEffectsTab({ element }),
 		],
 	};
@@ -311,7 +364,11 @@ function getAudioConfig({
 }): ElementPropertiesConfig {
 	return {
 		defaultTab: "audio",
-		tabs: [buildAudioTab({ element }), buildSpeedTab({ element })],
+		tabs: [
+			buildAudioTab({ element }),
+			buildAudioFadeTab({ element }),
+			buildSpeedTab({ element }),
+		],
 	};
 }
 

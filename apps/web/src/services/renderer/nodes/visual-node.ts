@@ -1,6 +1,7 @@
 import { BaseNode } from "./base-node";
 import type { Effect, EffectPass } from "@/effects/types";
 import type { Mask } from "@/masks/types";
+import type { NodeTransition } from "@/transitions/types";
 import type { BlendMode, Transform } from "@/rendering";
 import type { RetimeConfig, VisualElement } from "@/timeline";
 
@@ -16,6 +17,7 @@ export interface VisualNodeParams {
 	blendMode?: BlendMode;
 	effects?: Effect[];
 	masks?: Mask[];
+	transition?: NodeTransition;
 }
 
 export interface ResolvedVisualNodeState {
@@ -23,6 +25,8 @@ export interface ResolvedVisualNodeState {
 	transform: Transform;
 	opacity: number;
 	effectPasses: EffectPass[][];
+	/** Mask synthesized by a transition (wipe); takes precedence over the element's own mask. */
+	transitionMask?: Mask;
 }
 
 export interface ResolvedVisualSourceNodeState extends ResolvedVisualNodeState {

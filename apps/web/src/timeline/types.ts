@@ -2,6 +2,8 @@ import type { ElementAnimations } from "@/animation/types";
 import type { Effect } from "@/effects/types";
 import type { Mask } from "@/masks/types";
 import type { ParamValues } from "@/params";
+import type { ElementTransition } from "@/transitions/types";
+import type { TextAnimation } from "@/text/animation";
 import type { MediaTime } from "@/wasm";
 
 export type ElementRef = {
@@ -88,6 +90,8 @@ interface BaseAudioElement extends BaseTimelineElement {
 	type: "audio";
 	buffer?: AudioBuffer;
 	retime?: RetimeConfig;
+	audioFadeIn?: MediaTime;
+	audioFadeOut?: MediaTime;
 }
 
 export interface UploadAudioElement extends BaseAudioElement {
@@ -118,10 +122,13 @@ export interface VideoElement extends BaseTimelineElement {
 	type: "video";
 	mediaId: string;
 	isSourceAudioEnabled?: boolean;
+	audioFadeIn?: MediaTime;
+	audioFadeOut?: MediaTime;
 	hidden?: boolean;
 	retime?: RetimeConfig;
 	effects?: Effect[];
 	masks?: Mask[];
+	transition?: ElementTransition;
 }
 
 export interface ImageElement extends BaseTimelineElement {
@@ -130,12 +137,15 @@ export interface ImageElement extends BaseTimelineElement {
 	hidden?: boolean;
 	effects?: Effect[];
 	masks?: Mask[];
+	transition?: ElementTransition;
 }
 
 export interface TextElement extends BaseTimelineElement {
 	type: "text";
 	hidden?: boolean;
 	effects?: Effect[];
+	animationIn?: TextAnimation;
+	animationOut?: TextAnimation;
 }
 
 export interface StickerElement extends BaseTimelineElement {

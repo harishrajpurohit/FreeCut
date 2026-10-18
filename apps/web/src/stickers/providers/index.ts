@@ -1,11 +1,13 @@
 import { stickersRegistry } from "../registry";
 import type { StickerProvider } from "@/stickers/types";
+import { emojiProvider } from "./emoji";
 import { flagsProvider } from "./flags";
 import { logosProvider } from "./logos";
 import { shapesProvider } from "./shapes";
 
 const defaultProviders: StickerProvider[] = [
 	logosProvider,
+	emojiProvider,
 	flagsProvider,
 	shapesProvider,
 ];
@@ -19,6 +21,6 @@ export function registerDefaultStickerProviders({
 		if (stickersRegistry.has(provider.id)) {
 			continue;
 		}
-		stickersRegistry.register(provider.id, provider);
+		stickersRegistry.register({ key: provider.id, definition: provider });
 	}
 }

@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { PanelView } from "@/components/editor/panels/assets/views/base-panel";
 import { DraggableItem } from "@/components/editor/panels/assets/draggable-item";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { effectsRegistry, EFFECT_TARGET_ELEMENT_TYPES } from "@/effects";
+import {
+	countByCategory,
+	filterEffects,
+	GALLERY_CATEGORIES,
+	type GalleryCategory,
+} from "@/effects/gallery";
 import { effectPreviewService } from "@/services/renderer/effect-preview";
 import { useEditor } from "@/editor/use-editor";
 import { buildEffectElement } from "@/timeline/element-utils";
@@ -11,10 +19,52 @@ import type { EffectDefinition } from "@/effects/types";
 
 export function EffectsView() {
 	const effects = effectsRegistry.getAll();
+	const [query, setQuery] = useState("");
+	const [category, setCategory] = useState<GalleryCategory>("all");
+
+	const counts = useMemo(() => countByCategory({ effects }), [effects]);
+	const visibleEffects = useMemo(
+		() => filterEffects({ effects, query, category }),
+		[effects, query, category],
+	);
 
 	return (
 		<PanelView title="Effects">
-			<EffectsGrid effects={effects} />
+			<div className="flex flex-col gap-3">
+				<Input
+					size="sm"
+					variant="default"
+					placeholder="Search filters and effects..."
+					value={query}
+					onChange={(event) => setQuery(event.target.value)}
+					showClearIcon
+					onClear={() => setQuery("")}
+					className="w-full"
+					containerClassName="w-full"
+				/>
+				<Tabs
+					value={category}
+					onValueChange={(value) => setCategory(value as GalleryCategory)}
+					variant="underline"
+				>
+					<TabsList aria-label="Effect categories">
+						{GALLERY_CATEGORIES.filter(
+							(entry) => entry.id === "all" || counts[entry.id] > 0,
+						).map((entry) => (
+							<TabsTrigger key={entry.id} value={entry.id}>
+								{entry.label}
+							</TabsTrigger>
+						))}
+					</TabsList>
+				</Tabs>
+				{visibleEffects.length > 0 ? (
+					<EffectsGrid effects={visibleEffects} />
+				) : (
+					<p className="text-muted-foreground py-6 text-center text-sm">
+						No filters or effects match your search.
+					</p>
+				)}
+			</div>
 		</PanelView>
 	);
 }

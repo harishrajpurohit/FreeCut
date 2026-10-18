@@ -1,6 +1,7 @@
 import { hasKeyframesForPath } from "@/animation/keyframe-query";
 import { resolveNumberAtTime } from "@/animation/values";
 import { VOLUME_DB_MAX, VOLUME_DB_MIN } from "./audio-constants";
+import { resolveFadeGain } from "./audio-fade";
 import type { TimelineElement } from "./types";
 const DEFAULT_STEP_SECONDS = 1 / 60;
 
@@ -71,7 +72,32 @@ export function resolveEffectiveAudioGain({
 		localTime: Math.round(localTime * TICKS_PER_SECOND),
 	});
 
-	return dBToLinear(resolvedDb);
+	return (
+		dBToLinear(resolvedDb) *
+		resolveFadeGain({
+			fadeInSeconds: (element.audioFadeIn ?? 0) / TICKS_PER_SECOND,
+			fadeOutSeconds: (element.audioFadeOut ?? 0) / TICKS_PER_SECOND,
+			localTime,
+			durationSeconds: element.duration / TICKS_PER_SECOND,
+		})
+	);
+}
+
+export function hasAudioFade({
+	element,
+}: {
+	element: AudioCapableElement;
+}): boolean {
+	return (element.audioFadeIn ?? 0) > 0 || (element.audioFadeOut ?? 0) > 0;
+}
+
+/** True when gain changes over the clip (keyframed volume or a fade). */
+export function hasTimeVaryingGain({
+	element,
+}: {
+	element: AudioCapableElement;
+}): boolean {
+	return hasAnimatedVolume({ element }) || hasAudioFade({ element });
 }
 
 export function buildWaveformGainSamples({

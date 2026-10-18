@@ -25,6 +25,11 @@ import { insertCaptionChunksAsTextTrack } from "@/subtitles/insert";
 import { parseSubtitleFile } from "@/subtitles/parse";
 import { Spinner } from "@/components/ui/spinner";
 import {
+	DEFAULT_CAPTION_STYLE_PRESET_ID,
+	getTextStylePreset,
+	TEXT_STYLE_PRESETS,
+} from "@/text/presets";
+import {
 	Section,
 	SectionContent,
 	SectionField,
@@ -86,6 +91,9 @@ function processingReducer(
 export function Captions() {
 	const [selectedLanguage, setSelectedLanguage] =
 		useState<TranscriptionLanguage>("auto");
+	const [captionStyleId, setCaptionStyleId] = useState(
+		DEFAULT_CAPTION_STYLE_PRESET_ID,
+	);
 	const [processing, dispatch] = useReducer(processingReducer, IDLE_STATE);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -139,7 +147,10 @@ export function Captions() {
 			});
 
 			dispatch({ type: "update_step", step: "Generating captions..." });
-			const captionChunks = buildCaptionChunks({ segments: result.segments });
+			const captionStyle = getTextStylePreset({ id: captionStyleId })?.style;
+			const captionChunks = buildCaptionChunks({
+				segments: result.segments,
+			}).map((chunk) => ({ ...chunk, style: captionStyle }));
 
 			if (!insertCaptions({ captions: captionChunks })) {
 				dispatch({ type: "fail", error: "No captions were generated" });
@@ -302,6 +313,20 @@ export function Captions() {
 									{TRANSCRIPTION_LANGUAGES.map((language) => (
 										<SelectItem key={language.code} value={language.code}>
 											{language.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</SectionField>
+						<SectionField label="Caption style">
+							<Select value={captionStyleId} onValueChange={setCaptionStyleId}>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{TEXT_STYLE_PRESETS.map((preset) => (
+										<SelectItem key={preset.id} value={preset.id}>
+											{preset.name}
 										</SelectItem>
 									))}
 								</SelectContent>

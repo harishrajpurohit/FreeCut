@@ -22,6 +22,7 @@ import {
 	SectionTitle,
 } from "@/components/section";
 import { usePropertyDraft } from "@/components/editor/panels/properties/hooks/use-property-draft";
+import { SpeedCurveSection } from "@/speed/components/speed-curve-section";
 import {
 	formatNumberForDisplay,
 	getFractionDigitsForStep,
@@ -109,6 +110,7 @@ export function SpeedTab({
 	});
 
 	return (
+		<>
 		<Section collapsible sectionKey={`${element.id}:speed`}>
 			<SectionHeader>
 				<SectionTitle>Speed</SectionTitle>
@@ -152,5 +154,7 @@ export function SpeedTab({
 				</SectionFields>
 			</SectionContent>
 		</Section>
+		<SpeedCurveSection element={element} trackId={trackId} />
+		</>
 	);
 }

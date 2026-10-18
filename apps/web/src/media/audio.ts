@@ -10,7 +10,7 @@ import type { MediaAsset } from "@/media/types";
 import { applyAudioMasteringToBuffer } from "@/media/audio-mastering";
 import type { AudioCapableElement } from "@/timeline/audio-state";
 import {
-	hasAnimatedVolume,
+	hasTimeVaryingGain,
 	isElementMuted,
 	resolveEffectiveAudioGain,
 } from "@/timeline/audio-state";
@@ -852,7 +852,7 @@ function mixAudioChannels({
 			const lowerIndex = Math.floor(sourceIndex);
 			const upperIndex = Math.min(sourceData.length - 1, lowerIndex + 1);
 			const fraction = sourceIndex - lowerIndex;
-			const gain = hasAnimatedVolume({ element: element.timelineElement })
+			const gain = hasTimeVaryingGain({ element: element.timelineElement })
 				? resolveEffectiveAudioGain({
 						element: element.timelineElement,
 						localTime: clipTime,

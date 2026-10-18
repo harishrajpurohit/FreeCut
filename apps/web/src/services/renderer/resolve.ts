@@ -20,6 +20,12 @@ import {
 import { resolveColorAtTime, resolveOpacityAtTime } from "@/animation/values";
 import { resolveTransformAtTime } from "@/rendering/animation-values";
 import { videoCache } from "@/services/video-cache/service";
+import { resolveTextAnimation } from "@/text/animation";
+import {
+	applyTransition,
+	getTransitionHoldTicks,
+	getTransitionProgress,
+} from "@/transitions";
 import type { CanvasRenderer } from "./canvas-renderer";
 import type { AnyBaseNode } from "./nodes/base-node";
 import {
@@ -140,25 +146,45 @@ function resolveVisualState({
 	sourceHeight: number;
 }): ResolvedVisualNodeState | null {
 	const clipTime = context.time - params.timeOffset;
-	if (clipTime < 0 || clipTime >= params.duration) {
+	const visibleDuration =
+		params.duration + getTransitionHoldTicks({ transition: params.transition });
+	if (clipTime < 0 || clipTime >= visibleDuration) {
 		return null;
 	}
 
 	const localTime = getElementLocalTime({
-		timelineTime: context.time,
+		timelineTime: Math.min(context.time, params.timeOffset + params.duration - 1),
 		elementStartTime: params.timeOffset,
 		elementDuration: params.duration,
 	});
-	const transform = resolveTransformAtTime({
+	const baseTransform = resolveTransformAtTime({
 		baseTransform: params.transform,
 		animations: params.animations,
 		localTime,
 	});
-	const opacity = resolveOpacityAtTime({
+	const baseOpacity = resolveOpacityAtTime({
 		baseOpacity: params.opacity,
 		animations: params.animations,
 		localTime,
 	});
+	const transitionProgress = getTransitionProgress({
+		transition: params.transition,
+		clipTime,
+		clipDuration: params.duration,
+	});
+	const adjusted =
+		params.transition && transitionProgress !== null
+			? applyTransition({
+					transition: params.transition,
+					progress: transitionProgress,
+					opacity: baseOpacity,
+					transform: baseTransform,
+					canvasWidth: context.renderer.width,
+					canvasHeight: context.renderer.height,
+				})
+			: null;
+	const transform = adjusted?.transform ?? baseTransform;
+	const opacity = adjusted?.opacity ?? baseOpacity;
 	const containScale = Math.min(
 		context.renderer.width / sourceWidth,
 		context.renderer.height / sourceHeight,
@@ -181,6 +207,7 @@ function resolveVisualState({
 			width: effectWidth,
 			height: effectHeight,
 		}),
+		...(adjusted?.mask && { transitionMask: adjusted.mask }),
 	};
 }
 
@@ -192,14 +219,18 @@ async function resolveVideoNode({
 	context: ResolveContext;
 }): Promise<ResolvedVisualSourceNodeState | null> {
 	const clipTime = context.time - node.params.timeOffset;
-	if (clipTime < 0 || clipTime >= node.params.duration) {
+	const visibleDuration =
+		node.params.duration +
+		getTransitionHoldTicks({ transition: node.params.transition });
+	if (clipTime < 0 || clipTime >= visibleDuration) {
 		return null;
 	}
 
+	// While an outgoing transition plays past the clip's end, hold its last frame.
 	const sourceTimeTicks =
 		node.params.trimStart +
 		getSourceTimeAtClipTime({
-			clipTime,
+			clipTime: Math.min(clipTime, node.params.duration - 1),
 			retime: node.params.retime,
 		});
 	const frame = await videoCache.getFrameAt({
@@ -332,18 +363,35 @@ function resolveTextNode({
 		elementDuration: node.params.duration,
 	});
 	const background = buildTextBackgroundFromElement({ element: node.params });
+	const baseTransform = resolveTransformAtTime({
+		baseTransform: node.params.transform,
+		animations: node.params.animations,
+		localTime,
+	});
+	const textAnimation = resolveTextAnimation({
+		animationIn: node.params.animationIn,
+		animationOut: node.params.animationOut,
+		clipTime: context.time - node.params.startTime,
+		clipDuration: node.params.duration,
+		canvasHeight: node.params.canvasHeight,
+	});
 
 	return {
-		transform: resolveTransformAtTime({
-			baseTransform: node.params.transform,
-			animations: node.params.animations,
-			localTime,
-		}),
-		opacity: resolveOpacityAtTime({
-			baseOpacity: node.params.opacity,
-			animations: node.params.animations,
-			localTime,
-		}),
+		transform: {
+			...baseTransform,
+			scaleX: baseTransform.scaleX * textAnimation.scale,
+			scaleY: baseTransform.scaleY * textAnimation.scale,
+			position: {
+				x: baseTransform.position.x,
+				y: baseTransform.position.y + textAnimation.offsetY,
+			},
+		},
+		opacity:
+			resolveOpacityAtTime({
+				baseOpacity: node.params.opacity,
+				animations: node.params.animations,
+				localTime,
+			}) * textAnimation.opacity,
 		textColor: resolveColorAtTime({
 			baseColor:
 				typeof node.params.params.color === "string"

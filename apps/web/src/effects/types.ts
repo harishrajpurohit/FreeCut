@@ -32,9 +32,13 @@ export interface EffectRendererConfig {
 	}) => EffectPass[];
 }
 
+/** Gallery grouping: color grades, manual adjustments, or stylized looks. */
+export type EffectCategory = "filter" | "adjust" | "effect";
+
 export interface EffectDefinition {
 	type: string;
 	name: string;
+	category?: EffectCategory;
 	keywords: string[];
 	params: ParamDefinition[];
 	renderer: EffectRendererConfig;
