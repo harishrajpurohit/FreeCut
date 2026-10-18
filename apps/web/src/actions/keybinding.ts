@@ -32,11 +32,43 @@ export function isKey(value: string): value is Key {
 	return KEY_SET.has(value);
 }
 
+const MODIFIER_COMBOS = [
+	"ctrl",
+	"alt",
+	"shift",
+	"ctrl+shift",
+	"alt+shift",
+	"ctrl+alt",
+	"ctrl+alt+shift",
+] as const satisfies readonly ModifierKeys[];
+
+// Compile-time guard: every `ModifierKeys` member must be listed above.
+const modifierCombosAreExhaustive: [
+	Exclude<ModifierKeys, (typeof MODIFIER_COMBOS)[number]>,
+] extends [never]
+	? true
+	: never = true;
+void modifierCombosAreExhaustive;
+
+const MODIFIER_COMBO_SET: ReadonlySet<string> = new Set(MODIFIER_COMBOS);
+
 export type ModifierBasedShortcutKey = `${ModifierKeys}+${Key}`;
 // Singular keybindings (these will be disabled when an input-ish area has been focused)
 export type SingleCharacterShortcutKey = `${Key}`;
 
 export type ShortcutKey = ModifierBasedShortcutKey | SingleCharacterShortcutKey;
+
+/** True for a bare key ("s") or modifier + key ("ctrl+shift+s"); rejects unknown keys and modifier orderings. */
+export function isShortcutKey(value: string): value is ShortcutKey {
+	const separatorIndex = value.lastIndexOf("+");
+	if (separatorIndex === -1) {
+		return isKey(value);
+	}
+
+	const modifiers = value.slice(0, separatorIndex);
+	const key = value.slice(separatorIndex + 1);
+	return MODIFIER_COMBO_SET.has(modifiers) && isKey(key);
+}
 
 export type KeybindingConfig = {
 	[key in ShortcutKey]?: TActionWithOptionalArgs;
