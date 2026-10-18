@@ -1,46 +1,64 @@
-# FreeCut (Legacy)
+# FreeCut
 
-This is the original FreeCut codebase. It's archived and no longer maintained.
+A free, open-source, browser-based video editor with CapCut-style features. Your videos stay on your device.
 
-The rewrite is happening at [opencut-app/opencut](https://github.com/opencut-app/opencut).
+FreeCut is a fork of [OpenCut](https://github.com/OpenCut-app/opencut-classic) (the "classic" web editor) that adds new editing features on top of it. It is released under the same MIT license. Full credit for the original editor, timeline, renderer and Rust/WASM core goes to the OpenCut contributors.
 
-## Sponsors
+## What FreeCut adds
 
-Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss) and [fal.ai](https://fal.ai?utm_source=github-opencut&utm_campaign=oss) for their support of open-source software.
+Everything below is new in this fork. The base editor (multi-track timeline, keyframes, masks, subtitles, GPU renderer, MP4/WebM export) comes from OpenCut.
 
-<a href="https://vercel.com/oss">
-  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
-</a>
+### Filters and effects
+- **14 color filters** on a new GPU shader: Vivid, Warm, Cool, Black & White, Vintage, Sepia, Noir, Faded, Cinematic, Golden hour, Dreamy, Cyberpunk, Adjust (brightness, contrast, saturation, temperature, hue) and Vignette.
+- **Effects gallery** with live previews, search, and All / Filters / Adjust / Effects tabs.
 
-<a href="https://fal.ai">
-  <img alt="Powered by fal.ai" src="https://img.shields.io/badge/Powered%20by-fal.ai-000000?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCAxMEwxMy4wOSAxNS43NEwxMiAyMkwxMC45MSAxNS43NEw0IDEwTDEwLjkxIDguMjZMMTIgMloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=" />
-</a>
+### Transitions
+- **Dissolve, Slide and Wipe** between adjacent clips on the same track, with direction (left, right, up, down) and duration controls in a new **Transition** tab. Works for video and image clips.
 
-## Why?
+### Text and captions
+- **8 text style presets** in the Text panel: Classic, Bold title, Yellow, Black box, Highlight, Neon, Elegant, Impact.
+- **Text animations**: separate intro and outro animations (Fade, Pop, Slide up, Slide down, Zoom) with adjustable duration, in a new **Animation** tab.
+- **Caption style picker**: choose a style preset for auto-generated captions. Auto-captions (Whisper) and SRT/ASS import are inherited from OpenCut.
 
-- **Privacy**: Your videos stay on your device
-- **Free features**: Most basic CapCut features are now paywalled 
-- **Simple**: People want editors that are easy to use - CapCut proved that
+### Audio and speed
+- **Audio fade in / fade out** for audio clips and for video clips with sound, applied in playback, waveforms and export.
+- **Speed curves**: Ramp up, Ramp down, Hero, Bullet, Flash in, Flash out and Pulse. A curve splits the clip into segments that play at different speeds, in a single undo step, and each segment's speed stays editable.
 
-## Project Structure
+### Stickers
+- **Emoji stickers**: a new offline Emoji tab with 104 emoji in 6 groups, with search.
 
-- `apps/web/`: Next.js web application
-- `apps/desktop/`: Native desktop app built with GPUI (in progress)
-- `rust/`: Platform-agnostic core: GPU compositor, effects, masks, and WASM bindings. We're actively migrating business logic here from TypeScript.
-- `docs/`: Architecture and subsystem documentation
+### Fixes to the original code
+- Sticker providers were never registered, so every sticker tab was empty.
+- Scene effects failed to render in a locally built WASM package (a field-name mismatch between the TypeScript and Rust sides).
+- Legacy project migrations opened a database named "undefined" and migrated nothing.
+- Keybinding persistence imported two helper functions that did not exist, so its tests could not run.
 
-## Getting Started
+### Status
+
+| Area | Checked |
+|---|---|
+| Filters, gallery, dissolve, wipe, text presets, text fade, audio fade, speed curve (Ramp up), emoji, MP4 export | Tried in the running editor |
+| Slide transition, other text animations, other speed curves, fade out | Unit tests only |
+| Caption style picker | Not run (needs a Whisper model download) |
+
+## Getting started
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/docs/installation)
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-
-> **Note:** Docker is optional but recommended for running the local database and Redis. If you only want to work on frontend features, you can skip it.
+- [Rust](https://rustup.rs/) with the `wasm32-unknown-unknown` target and [`wasm-pack`](https://rustwasm.github.io/wasm-pack/). **Required:** the color filters and the scene-effects fix live in the Rust crates, and the published `opencut-wasm` package does not include them, so you must build the WASM package locally (see below).
+- On Windows: the Visual Studio Build Tools with the C++ workload (needed by Rust).
+- Docker is optional. The editor itself runs without the database and Redis.
 
 ### Setup
 
-1. Fork and clone the repository
+1. Clone the repository and install dependencies:
+
+   ```bash
+   git clone https://github.com/harishrajpurohit/FreeCut.git
+   cd FreeCut
+   bun install
+   ```
 
 2. Copy the environment file:
 
@@ -52,111 +70,77 @@ Thanks to [Vercel](https://vercel.com?utm_source=github-opencut&utm_campaign=oss
    Copy-Item apps/web/.env.example apps/web/.env.local
    ```
 
-3. Start the database and Redis:
-
-   ```bash
-   docker compose up -d db redis serverless-redis-http
-   ```
-
-4. Install dependencies and start the dev server:
-
-   ```bash
-   bun install
-   bun dev:web
-   ```
-
-The application will be available at [http://localhost:3000](http://localhost:3000).
-
-The `.env.example` has sensible defaults that match the Docker Compose config — it should work out of the box.
-
-### Desktop setup
-
-Desktop is opt-in. If you're only working on the web app, skip this entirely.
-
-If you want to get ready for `apps/desktop`, see [`apps/desktop/README.md`](apps/desktop/README.md). It's a two-step setup: Rust toolchain first, then desktop native dependencies.
-
-### Local WASM development
-
-Only needed if you're editing `rust/wasm` and want the web app to use your local build instead of the published package.
-
-**Prerequisites** — install these once before anything else:
-
-```bash
-# Rust toolchain
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# build the WASM package
-cargo install wasm-pack
-
-# reruns the build on file changes, used by bun dev:wasm
-cargo install cargo-watch
-```
-
-1. Build the package once from the repo root:
+3. Build the WASM package and link it into the web app:
 
    ```bash
    bun run build:wasm
-   ```
 
-2. Register the generated package for linking:
-
-   ```bash
    cd rust/wasm/pkg
    bun link
-   ```
 
-3. Link `apps/web` to the local package:
-
-   ```bash
-   cd apps/web
+   cd ../../../apps/web
    bun link opencut-wasm
    ```
 
-4. Rebuild on changes while you work:
+   Re-run `bun run build:wasm` after changing anything under `rust/`. Running `bun install` again can replace the linked package, so repeat the `bun link opencut-wasm` step if filters stop appearing.
+
+4. Start the dev server:
 
    ```bash
-   bun dev:wasm
+   bun dev:web
    ```
 
-To switch `apps/web` back to the published package, run:
+The app is available at [http://localhost:3000](http://localhost:3000).
+
+### Optional services
+
+The Sounds library search needs a local Redis (see `docker-compose.yml`); without it that one API route returns a 500, and everything else works. To run the database and Redis:
+
+```bash
+docker compose up -d db redis serverless-redis-http
+```
+
+### Tests and type checking
 
 ```bash
 cd apps/web
-bun add opencut-wasm
+bun test
+bunx tsc --noEmit
 ```
 
-### Self-Hosting with Docker
+Four test files import the WASM bundle, which `bun test` cannot initialize, so they fail in that runner. This is not caused by FreeCut's changes.
 
-To run everything (including a production build of the app) in Docker:
+### Desktop app
 
-```bash
-docker compose up -d
-```
+The native desktop app (`apps/desktop`, built with GPUI) is inherited from OpenCut and is still in progress. See [`apps/desktop/README.md`](apps/desktop/README.md).
 
-The app will be available at [http://localhost:3100](http://localhost:3100).
+## Project structure
 
-## Contributing
+- `apps/web/`: Next.js web application
+- `apps/desktop/`: Native desktop app built with GPUI (in progress)
+- `rust/`: Platform-agnostic core: GPU compositor, effects, masks and WASM bindings
+- `docs/`: Architecture and subsystem documentation, including [how to add an effect](docs/effects-renderer.md)
 
-We welcome contributions! While we're actively developing and refactoring certain areas, there are plenty of opportunities to contribute effectively.
+Where the new features live:
 
-**🎯 Focus areas:** Timeline functionality, project management, performance, bug fixes, and UI improvements outside the preview panel.
+| Feature | Location |
+|---|---|
+| Filters | `rust/crates/effects/src/shaders/color_adjust.wgsl`, `apps/web/src/effects/definitions/color-adjust.ts` |
+| Effects gallery | `apps/web/src/effects/gallery.ts`, `apps/web/src/effects/components/` |
+| Transitions | `apps/web/src/transitions/` |
+| Text presets and animations | `apps/web/src/text/` |
+| Audio fades | `apps/web/src/timeline/audio-fade.ts` |
+| Speed curves | `apps/web/src/retime/speed-curve.ts`, `apps/web/src/retime/apply-speed-curve.ts` |
+| Emoji stickers | `apps/web/src/stickers/providers/emoji.ts` |
 
-**⚠️ Avoid for now:** Preview panel enhancements (fonts, stickers, effects) and export functionality - we're refactoring these with a new binary rendering approach.
+## Known limitations
 
-See our [Contributing Guide](.github/CONTRIBUTING.md) for detailed setup instructions, development guidelines, and complete focus area guidance.
+- The logo images are still OpenCut's artwork. Only the text name was changed to FreeCut.
+- Package and crate names (`opencut-wasm`, `@opencut/*`) and local storage keys were left unchanged so installs and saved data keep working.
+- Speed curves approximate a ramp with several constant-speed segments rather than a continuous curve, and keyframes on the original clip are not carried onto the segments.
 
-**Quick start for contributors:**
+## Acknowledgements and license
 
-- Fork the repo and clone locally
-- Follow the setup instructions in CONTRIBUTING.md
-- Working on `apps/desktop`? See [`apps/desktop/README.md`](apps/desktop/README.md) for setup
-- Create a feature branch and submit a PR
+FreeCut is built on [OpenCut](https://github.com/OpenCut-app/opencut-classic) by the OpenCut contributors. Upstream development continues at [opencut-app/opencut](https://github.com/opencut-app/opencut).
 
-## License
-
-[MIT LICENSE](LICENSE)
-
----
-
-![Star History Chart](https://api.star-history.com/svg?repos=opencut-app/opencut&type=Date)
-
+Released under the [MIT License](LICENSE).
