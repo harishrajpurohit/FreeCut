@@ -23,8 +23,8 @@ import { videoCache } from "@/services/video-cache/service";
 import { resolveTextAnimation } from "@/text/animation";
 import {
 	applyTransition,
+	getActiveTransition,
 	getTransitionHoldTicks,
-	getTransitionProgress,
 } from "@/transitions";
 import type { CanvasRenderer } from "./canvas-renderer";
 import type { AnyBaseNode } from "./nodes/base-node";
@@ -147,7 +147,8 @@ function resolveVisualState({
 }): ResolvedVisualNodeState | null {
 	const clipTime = context.time - params.timeOffset;
 	const visibleDuration =
-		params.duration + getTransitionHoldTicks({ transition: params.transition });
+		params.duration +
+		getTransitionHoldTicks({ transitions: params.transitions });
 	if (clipTime < 0 || clipTime >= visibleDuration) {
 		return null;
 	}
@@ -167,16 +168,16 @@ function resolveVisualState({
 		animations: params.animations,
 		localTime,
 	});
-	const transitionProgress = getTransitionProgress({
-		transition: params.transition,
+	const activeTransition = getActiveTransition({
+		transitions: params.transitions,
 		clipTime,
 		clipDuration: params.duration,
 	});
-	const adjusted =
-		params.transition && transitionProgress !== null
-			? applyTransition({
-					transition: params.transition,
-					progress: transitionProgress,
+	const adjusted = activeTransition
+		? applyTransition({
+					transition: activeTransition.transition,
+					progress: activeTransition.progress,
+					rawProgress: activeTransition.rawProgress,
 					opacity: baseOpacity,
 					transform: baseTransform,
 					canvasWidth: context.renderer.width,
@@ -200,13 +201,16 @@ function resolveVisualState({
 		localTime,
 		transform,
 		opacity,
-		effectPasses: resolveEffectPassGroups({
-			effects: params.effects,
-			animations: params.animations,
-			localTime,
-			width: effectWidth,
-			height: effectHeight,
-		}),
+		effectPasses: [
+			...resolveEffectPassGroups({
+				effects: params.effects,
+				animations: params.animations,
+				localTime,
+				width: effectWidth,
+				height: effectHeight,
+			}),
+			...(adjusted?.effectPasses ?? []).filter((group) => group.length > 0),
+		],
 		...(adjusted?.mask && { transitionMask: adjusted.mask }),
 	};
 }
@@ -221,7 +225,7 @@ async function resolveVideoNode({
 	const clipTime = context.time - node.params.timeOffset;
 	const visibleDuration =
 		node.params.duration +
-		getTransitionHoldTicks({ transition: node.params.transition });
+		getTransitionHoldTicks({ transitions: node.params.transitions });
 	if (clipTime < 0 || clipTime >= visibleDuration) {
 		return null;
 	}

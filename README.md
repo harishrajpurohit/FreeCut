@@ -13,7 +13,10 @@ Everything below is new in this fork. The base editor (multi-track timeline, key
 - **Effects gallery** with live previews, search, and All / Filters / Adjust / Effects tabs.
 
 ### Transitions
-- **Dissolve, Slide and Wipe** between adjacent clips on the same track, with direction (left, right, up, down) and duration controls in a new **Transition** tab. Works for video and image clips.
+- **13 transitions** between adjacent clips on the same track: Dissolve, Slide, Cover, Wipe, Dip to black, Flash, Zoom in, Zoom out, Spin, Whip pan (with motion blur), Glitch, Circle reveal and Box reveal.
+- A **Transitions gallery** in the sidebar with animated previews. Select a clip and click one to apply it.
+- A **Transition** tab on each video or image clip for the type, direction (left, right, up, down) and duration.
+- A clip can have a transition at both ends, so chains like A → B → C blend at every cut. Clips must sit back to back on the same track.
 
 ### Text and captions
 - **8 text style presets** in the Text panel: Classic, Bold title, Yellow, Black box, Highlight, Neon, Elegant, Impact.
@@ -37,8 +40,9 @@ Everything below is new in this fork. The base editor (multi-track timeline, key
 
 | Area | Checked |
 |---|---|
-| Filters, gallery, dissolve, wipe, text presets, text fade, audio fade, speed curve (Ramp up), emoji, MP4 export | Tried in the running editor |
-| Slide transition, other text animations, other speed curves, fade out | Unit tests only |
+| Filters, effects gallery, text presets, text fade, audio fade, speed curve (Ramp up), emoji, MP4 export | Tried in the running editor |
+| Dissolve, Wipe, Dip to black, Whip pan, Glitch, Circle reveal, Box reveal, Spin | Exported to MP4 and checked frame by frame |
+| Slide, Cover, Flash, Zoom in, Zoom out, other text animations, other speed curves, fade out | Unit tests only |
 | Caption style picker | Not run (needs a Whisper model download) |
 
 ## Getting started

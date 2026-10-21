@@ -17,7 +17,8 @@ export interface VisualNodeParams {
 	blendMode?: BlendMode;
 	effects?: Effect[];
 	masks?: Mask[];
-	transition?: NodeTransition;
+	/** Up to two: the incoming one at the clip's start and the outgoing one after its end. */
+	transitions?: NodeTransition[];
 }
 
 export interface ResolvedVisualNodeState {

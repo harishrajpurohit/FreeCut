@@ -1,6 +1,19 @@
 import type { MediaTime } from "@/wasm";
 
-export type TransitionType = "dissolve" | "slide" | "wipe";
+export type TransitionType =
+	| "dissolve"
+	| "slide"
+	| "cover"
+	| "wipe"
+	| "dip-black"
+	| "dip-white"
+	| "zoom-in"
+	| "zoom-out"
+	| "spin"
+	| "whip-pan"
+	| "glitch"
+	| "iris"
+	| "box";
 
 export type TransitionDirection = "left" | "right" | "up" | "down";
 

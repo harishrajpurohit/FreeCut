@@ -40,9 +40,9 @@ describe("getTransitionProgress", () => {
 	});
 
 	test("only the outgoing clip is held past its end", () => {
-		expect(getTransitionHoldTicks({ transition: transition({ role: "out" }) })).toBe(100);
-		expect(getTransitionHoldTicks({ transition: transition({ role: "in" }) })).toBe(0);
-		expect(getTransitionHoldTicks({ transition: undefined })).toBe(0);
+		expect(getTransitionHoldTicks({ transitions: [transition({ role: "out" })] })).toBe(100);
+		expect(getTransitionHoldTicks({ transitions: [transition({ role: "in" })] })).toBe(0);
+		expect(getTransitionHoldTicks({ transitions: undefined })).toBe(0);
 	});
 });
 

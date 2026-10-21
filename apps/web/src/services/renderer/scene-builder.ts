@@ -12,8 +12,7 @@ import { EffectLayerNode } from "./nodes/effect-layer-node";
 import type { AnyBaseNode } from "./nodes/base-node";
 import type { TBackground, TCanvasSize } from "@/project/types";
 import { DEFAULT_BACKGROUND_BLUR_INTENSITY } from "@/background/blur";
-import { ADJACENT_TOLERANCE_TICKS } from "@/transitions";
-import type { NodeTransition } from "@/transitions";
+import { resolveNodeTransitions } from "@/transitions/scene";
 import {
 	buildTransformFromParams,
 	readBlendModeFromParams,
@@ -30,67 +29,6 @@ function getVisibleSortedElements({ track }: { track: TimelineTrack }) {
 			if (a.startTime !== b.startTime) return a.startTime - b.startTime;
 			return a.id.localeCompare(b.id);
 		});
-}
-
-type TransitionCandidate = {
-	type: string;
-	startTime: number;
-	duration: number;
-	transition?: { type: NodeTransition["type"]; direction: NodeTransition["direction"]; duration: number };
-};
-
-function isTransitionCandidate(
-	element: { type: string },
-): element is TransitionCandidate {
-	return element.type === "video" || element.type === "image";
-}
-
-/**
- * A transition lives on the incoming clip. It resolves to an "in" role on that
- * clip and an "out" role on the adjacent clip before it, which is held for the
- * transition's length so the two can blend.
- */
-function resolveNodeTransition({
-	elements,
-	index,
-}: {
-	elements: { type: string; startTime: number; duration: number }[];
-	index: number;
-}): NodeTransition | undefined {
-	const element = elements[index];
-	if (!isTransitionCandidate(element)) return undefined;
-
-	const previous = elements[index - 1];
-	if (
-		element.transition &&
-		previous &&
-		isTransitionCandidate(previous) &&
-		Math.abs(previous.startTime + previous.duration - element.startTime) <=
-			ADJACENT_TOLERANCE_TICKS
-	) {
-		return {
-			...element.transition,
-			duration: Math.min(element.transition.duration, element.duration),
-			role: "in",
-		};
-	}
-
-	const next = elements[index + 1];
-	if (
-		next &&
-		isTransitionCandidate(next) &&
-		next.transition &&
-		Math.abs(element.startTime + element.duration - next.startTime) <=
-			ADJACENT_TOLERANCE_TICKS
-	) {
-		return {
-			...next.transition,
-			duration: Math.min(next.transition.duration, next.duration),
-			role: "out",
-		};
-	}
-
-	return undefined;
 }
 
 function buildTrackNodes({
@@ -110,7 +48,7 @@ function buildTrackNodes({
 		const elements = getVisibleSortedElements({ track });
 
 		for (const [elementIndex, element] of elements.entries()) {
-			const transition = resolveNodeTransition({
+			const transitions = resolveNodeTransitions({
 				elements,
 				index: elementIndex,
 			});
@@ -149,7 +87,7 @@ function buildTrackNodes({
 							blendMode: readBlendModeFromParams({ params: element.params }),
 							effects: element.effects ?? [],
 							masks: element.masks ?? [],
-							transition,
+							transitions,
 						}),
 					);
 				}
@@ -167,7 +105,7 @@ function buildTrackNodes({
 							blendMode: readBlendModeFromParams({ params: element.params }),
 							effects: element.effects ?? [],
 							masks: element.masks ?? [],
-							transition,
+							transitions,
 							...(isPreview && {
 								maxSourceSize: PREVIEW_MAX_IMAGE_SIZE,
 							}),
